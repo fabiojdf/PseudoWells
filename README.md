@@ -27,4 +27,4 @@ python bin/start.py
 **Contact**
 * In case of any questions/bugs, feel free to email fabiojdf[at]id[dot]uff[dot]br
 
-![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=fabiojdf&hide=Lasso)
+[![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=fabiojdf&hide=lasso)](https://github.com/anuraghazra/github-readme-stats)
