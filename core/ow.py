@@ -23,7 +23,7 @@ def sw_gen(depth, ow, so):
 
     sw = np.empty(len(depth))
 
-    oil = (depth < ow)
+    oil = (depth <= ow)
     water = (depth > ow)
 
     sw[oil] = 1 - so

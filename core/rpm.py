@@ -49,6 +49,9 @@ def soft_sand(K, G, rho, phi, phic, n, P):
     return Ksoft, Gsoft
 
 
+#TODO Add other rock physics models
+
+
 def gassmann(Kdry, Ks, Kf, phi):
     """Fluid substitution using Gassmann's Equation
 
