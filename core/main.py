@@ -16,7 +16,7 @@ nfacies = SIMUL_PARAS['nfacies']
 
 P = np.matrix([[SIMUL_PARAS['p11'], SIMUL_PARAS['p12'], SIMUL_PARAS['p13']],
 [SIMUL_PARAS['p21'], SIMUL_PARAS['p22'], SIMUL_PARAS['p23']],
-[SIMUL_PARAS['p31'], SIMUL_PARAS['p32'], SIMUL_PARAS['p33']]])
+[SIMUL_PARAS['p31'], SIMUL_PARAS['p32'], SIMUL_PARAS['p33']]]).T
 
 code = SIMUL_PARAS['code']
 color = SIMUL_PARAS['color']
@@ -69,6 +69,8 @@ def run():
 
         rv.append(gaussian_gen(mux[i], muy[i], cov[i])[0])
         rv_pdf.append(gaussian_gen(mux[i], muy[i], cov[i])[1])
+
+    X, Y = np.meshgrid(np.linspace(0, 1, 100), np.linspace(0, 1, 100))
     
     f1_p = sampling_from_gaussian(rv[0], depth, f1)
     f2_p = sampling_from_gaussian(rv[1], depth, f2)
@@ -86,9 +88,13 @@ def run():
     model_f2 = syn_variogram(depth, f2_p[2][0, 0], lh2)
     model_f3 = syn_variogram(depth, f3_p[2][0, 0], lh3)
 
-    sim_x_f1, sim_y_f1 = simulations(model_f1, f1_p[2], m1, m2)
-    sim_x_f2, sim_y_f2 = simulations(model_f2, f2_p[2], m1, m2)
-    sim_x_f3, sim_y_f3 = simulations(model_f3, f3_p[2], m1, m2)
+    variogram_plot(f1_p[2][0, 0] - f1_p[2][0, 0]*model_f1, lh1, f1_p[2][0, 0])
+
+    sim_x_f1, sim_y_f1, c_ex = simulations(model_f1, f1_p[2], m1, m2)
+    sim_x_f2, sim_y_f2, _ = simulations(model_f2, f2_p[2], m1, m2)
+    sim_x_f3, sim_y_f3, _ = simulations(model_f3, f3_p[2], m1, m2)
+
+    cov_matrix_plot(c_ex[0:25, 0:25])
 
     sim_x = np.empty(len(depth))
     sim_y = np.empty(len(depth))
@@ -101,12 +107,22 @@ def run():
     vclay = sim_y
 
     sw = sw_gen(depth, ow, so)
+    sw[f1] = 1.0
     #TODO identify if one of lithologies is Shale and define SW = 1.0 in these intervals
 
     rhob = rhob_gen(depth, phi, ow, rho_min, rho_oil, rho_water)
 
     Ksoft, Gsoft = soft_sand(rpm_k, rpm_g, rho_min, phi, phi_c, coord_n, rpm_p)
     Ksoft[f1], Gsoft[f1] = soft_sand(K=21.0 * 10**9, G=7.0 * 10**9, rho=2.58, phi=phi[f1], phic=phi_c, n=11.0, P=rpm_p)   # Using other rpm parameters for some lithologies.
+    
+    rpm_plot(np.linspace(0, 1, 100),
+             soft_sand(rpm_k, rpm_g, rho_min, np.linspace(0, 1, 100), phi_c, coord_n, rpm_p)[0],
+             np.linspace(0, 1, 100),
+             soft_sand(K=21.0 * 10**9, G=7.0 * 10**9, rho=2.58, phi=np.linspace(0, 1, 100), phic=phi_c, n=11.0, P=rpm_p)[0],
+             'yellow',
+             'green',
+             code[0],
+             code[2])
 
     Gsat = Gsoft
     Ksat = np.empty(len(Gsat))
@@ -117,8 +133,12 @@ def run():
     Vp = (Msat/10**9/rhob)**0.5
     Vs = (Gsat/10**9/rhob)**0.5
 
-    #TODO introduce spatial correlated error
+    error_var = syn_variogram(depth, 1.0, 1.0)
+    Vp = simulations_error(error_var, Vp, 0.4)
+    Vs = simulations_error(error_var, Vs, 0.1)
+    rhob = simulations_error(error_var, rhob, 0.1)
 
+    bivariate_plot(X, Y, rv_pdf, color)
     logplots(depth, vclay, phi, sw, Vp, Vs, rhob, f1, f2, f3)
     crossplot_vpvs(Vp, Vs, z=vclay, zlabel='VCLAY [dec]')
 

@@ -13,14 +13,14 @@ SIMUL_PARAS = {
     'base': 2200,               # base of interval
     'sr': 0.5,                   # sample rate
     'nfacies': 3,               # number of facies (only works for 3)
-    'p11': 0.92,                # facies 1 thickness
-    'p12': 0.07,                # probability of transition from facies 1 to 2   
-    'p13': 0.0,
-    'p22': 0.91,
+    'p11': 0.9,                # facies 1 thickness
+    'p12': 0.05,                # probability of transition from facies 1 to 2   
+    'p13': 0.05,
+    'p22': 0.93,
     'p21': 0.0,
-    'p23': 0.05,
-    'p33': 0.93,
-    'p31': 0.08,
+    'p23': 0.07,
+    'p33': 0.95,
+    'p31': 0.05,
     'p32': 0.0,
     'code': ['Shale', 'Silty', 'Sand'],
     'color': ['green', 'brown', 'yellow']
@@ -41,7 +41,7 @@ STOCH_PARAS = {
 }
 
 FINAL_PARAS = {
-    'ow': 2100,                  # depth of oil-water contact
+    'ow': 2100.0,                  # depth of oil-water contact
     'so': 0.9,                   # Oil saturation
     'rho_oil': 0.63,
     'k_oil': 0.4 * 10**9,

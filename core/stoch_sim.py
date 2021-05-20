@@ -149,6 +149,7 @@ def simulations(model, cov, avr_x, avr_y):
 
     R = np.linalg.cholesky(K)
 
+    np.random.seed(42)
     u = np.random.normal(loc=0, scale=1, size=2*len(model))
 
     w = np.dot(R, u)
@@ -159,4 +160,35 @@ def simulations(model, cov, avr_x, avr_y):
     sim_x = np.clip(sim_x, 10**-5, 1.0)
     sim_y = np.clip(sim_y, 10**-5, 1.0)
 
-    return sim_x, sim_y
+    return sim_x, sim_y, c
+
+
+def simulations_error(model, avr, scale):
+
+    c = np.zeros((len(model), len(model)))
+
+    for i in range(len(model)):
+        for j in range(len(model)):
+            
+            if i == j:
+                
+                c[i][j] = model[0]
+                
+            elif (j > i):
+                
+                c[i][j] = model[j - i]
+                    
+            elif (j < i):
+                    
+                c[i][j] = model[i - j]
+
+    R = np.linalg.cholesky(c)
+
+    np.random.seed(43)
+    u = np.random.normal(loc=0, scale=scale, size=len(model))
+
+    w = np.dot(R, u)
+
+    sim_x = avr + w
+
+    return sim_x

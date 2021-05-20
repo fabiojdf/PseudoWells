@@ -114,6 +114,6 @@ def rhob_gen(depth, phi, ow, rho, rho_oil, rho_water):
     rhor = np.empty(len(phi))
 
     rhor[(depth > ow)] = (1-phi[(depth > ow)]) * rho + phi[(depth > ow)] * rho_water
-    rhor[(depth < ow)] = (1-phi[(depth < ow)]) * rho + phi[(depth < ow)] * rho_oil
+    rhor[(depth <= ow)] = (1-phi[(depth <= ow)]) * rho + phi[(depth <= ow)] * rho_oil
 
     return rhor

@@ -53,7 +53,7 @@ def mcmc(nfacies, depth, P, code, sf=1):
         facies[i] = random.choices(a, dist)[0]
         code_facies.append(dic.get(facies[i]))
 
-    return facies, code_facies
+    return facies[::-1], code_facies[::-1]
     
     
 
