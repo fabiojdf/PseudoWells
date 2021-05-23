@@ -36,7 +36,7 @@ def mcmc(nfacies, depth, P, code, sf=1):
     facies = np.empty(len(depth))
     facies[0] = sf
 
-    a = np.arange(1, nfacies+1)
+    a = np.arange(0, nfacies)
 
     zipf = zip(a, code)
     dic = dict(zipf)

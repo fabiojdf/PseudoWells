@@ -1,5 +1,6 @@
 import numpy as np      #TODO import only numpy functions used
-from pandas import DataFrame
+import pandas as pd
+pd.options.mode.chained_assignment = None
 
 from conf.settings import *
 from core.mcmc import *
@@ -31,6 +32,7 @@ cov = [covf1, covf2, covf3]
 lh1 = STOCH_PARAS['lh1']
 lh2 = STOCH_PARAS['lh2']
 lh3 = STOCH_PARAS['lh3']
+lh = [lh1, lh2, lh3]
 
 ow = FINAL_PARAS['ow']
 so = FINAL_PARAS['so']
@@ -47,101 +49,115 @@ phi_c = FINAL_PARAS['phi_c']
 coord_n = FINAL_PARAS['coord_n']
 c_error = FINAL_PARAS['c_error']
 r_error = FINAL_PARAS['r_error']
-
-#TODO configure the script for the user feel free to type n facies
+boolean = FINAL_PARAS['use_dif_params']
 
 
 def run():
 
     depth = np.arange(top, base, sr)
+    df = pd.DataFrame(data=depth.T, columns=['Depth'])
 
-    facies, code_facies = mcmc(nfacies, depth, P, code, sf=1)
+    for i in range(nfacies):
+        if (len(P) == nfacies) & (len(code) == nfacies):
+            df['facies'], df['code_facies'] = mcmc(nfacies, depth, P, code, sf=0)
+        else:
+            raise ValueError('The number of facies is different from the codes of facies or matrix P dimensions. Check your parameters')
+
+
     transition_matrix_show(P)
-
-    f1 = (facies == 1)
-    f2 = (facies == 2)
-    f3 = (facies == 3)
+    
+    for i in range(nfacies):
+        df[f'f{i}'] = (df['facies'] == i)
 
     rv = []
     rv_pdf = []
 
-    for i in range(3):
-
+    for i in range(nfacies):
         rv.append(gaussian_gen(mux[i], muy[i], cov[i])[0])
         rv_pdf.append(gaussian_gen(mux[i], muy[i], cov[i])[1])
 
-    X, Y = np.meshgrid(np.linspace(0, 1, 100), np.linspace(0, 1, 100))
-    
-    f1_p = sampling_from_gaussian(rv[0], depth, f1)
-    f2_p = sampling_from_gaussian(rv[1], depth, f2)
-    f3_p = sampling_from_gaussian(rv[2], depth, f3)
-
-
     m1 = np.empty(len(depth))
     m2 = np.empty(len(depth))
+    covariance = [0, 0, 0]
 
-    m1[f1], m2[f1] = f1_p[0], f1_p[1]
-    m1[f2], m2[f2] = f2_p[0], f2_p[1]
-    m1[f3], m2[f3] = f3_p[0], f3_p[1]
 
-    model_f1 = syn_variogram(depth, f1_p[2][0, 0], lh1)
-    model_f2 = syn_variogram(depth, f2_p[2][0, 0], lh2)
-    model_f3 = syn_variogram(depth, f3_p[2][0, 0], lh3)
+    for i in range(nfacies):
+        m1[df[f'f{i}']], m2[df[f'f{i}']], covariance[i] = sampling_from_gaussian(rv[i], depth, df[f'f{i}'])
 
-    variogram_plot(f1_p[2][0, 0] - f1_p[2][0, 0]*model_f1, lh1, f1_p[2][0, 0])
+    df['m1'] = m1
+    df['m2'] = m2
 
-    sim_x_f1, sim_y_f1, c_ex = simulations(model_f1, f1_p[2], m1, m2)
-    sim_x_f2, sim_y_f2, _ = simulations(model_f2, f2_p[2], m1, m2)
-    sim_x_f3, sim_y_f3, _ = simulations(model_f3, f3_p[2], m1, m2)
 
-    cov_matrix_plot(c_ex[0:25, 0:25])
+    for i in range(nfacies):
+        df[f'model_f{i}'] = syn_variogram(depth, covariance[i][0, 0], lh[i])
+
+
+    for i in range(nfacies):
+        df[f'sim_x_f{i}'], df[f'sim_y_f{i}'], c_ex = simulations(df[f'model_f{i}'], covariance[i], df['m1'], df['m2']) 
+
 
     sim_x = np.empty(len(depth))
     sim_y = np.empty(len(depth))
 
-    sim_x[f1], sim_y[f1] = sim_x_f1[f1], sim_y_f1[f1]
-    sim_x[f2], sim_y[f2] = sim_x_f2[f2], sim_y_f2[f2]
-    sim_x[f3], sim_y[f3] = sim_x_f3[f3], sim_y_f3[f3]
 
-    phi = sim_x
-    vclay = sim_y
+    for i in range(nfacies):
+        sim_x[df[f'f{i}']], sim_y[df[f'f{i}']] = df[f'sim_x_f{i}'][df[f'f{i}']], df[f'sim_y_f{i}'][df[f'f{i}']]
 
-    sw = sw_gen(depth, ow, so)
-    sw[f1] = 1.0
-    #TODO identify if one of lithologies is Shale and define SW = 1.0 in these intervals
+    df['phi'] = sim_x
+    df['vclay'] = sim_y
 
-    rhob = rhob_gen(depth, phi, ow, rho_min, rho_oil, rho_water)
 
-    Ksoft, Gsoft = soft_sand(rpm_k, rpm_g, rho_min, phi, phi_c, coord_n, rpm_p)
-    Ksoft[f1], Gsoft[f1] = soft_sand(K=21.0 * 10**9, G=7.0 * 10**9, rho=2.58, phi=phi[f1], phic=phi_c, n=11.0, P=rpm_p)   # Using other rpm parameters for some lithologies.
+    df['sw'] = sw_gen(depth, ow, so)
+    i = 0
+    for words in code:
+        if words.lower() == 'shale':
+            index = i
+            df['sw'][df[f'f{index}']] = 1.0
+            break
+        else:
+            i = i+1
+
+    df['rhob'] = rhob_gen(depth, df['phi'], ow, rho_min, rho_oil, rho_water)
+    
+    df['Ksoft'], df['Gsoft'] = soft_sand(rpm_k, rpm_g, rho_min, df['phi'], phi_c, coord_n, rpm_p)
+    print(df)
+    
+    if boolean == True:
+        df['Ksoft'][df[f'f{index}']], df['Gsoft'][df[f'f{index}']] = soft_sand(K=21.0 * 10**9, G=7.0 * 10**9, rho=2.58,
+                                                                               phi=df['phi'][df[f'f{index}']], phic=phi_c,
+                                                                               n=11.0, P=rpm_p)    
     
     rpm_plot(np.linspace(0, 1, 100),
              soft_sand(rpm_k, rpm_g, rho_min, np.linspace(0, 1, 100), phi_c, coord_n, rpm_p)[0],
              np.linspace(0, 1, 100),
              soft_sand(K=21.0 * 10**9, G=7.0 * 10**9, rho=2.58, phi=np.linspace(0, 1, 100), phic=phi_c, n=11.0, P=rpm_p)[0],
-             'yellow',
-             'green',
+             color[0],
+             color[2],
              code[0],
              code[2])
 
-    Gsat = Gsoft
-    Ksat = np.empty(len(Gsat))
-    Ksat[(depth <= ow)] = gassmann(Ksoft[(depth <= ow)], rpm_k, k_oil, phi[(depth <= ow)])
-    Ksat[(depth > ow)] = gassmann(Ksoft[(depth > ow)], rpm_k, k_water, phi[(depth > ow)])
+    df['Gsat'] = df['Gsoft']
+    df['Ksat'] = np.empty(len(df['Gsat']))
+    df['Ksat'][depth <= ow] = gassmann(df['Ksoft'][depth <= ow], rpm_k, k_oil, df['phi'][depth <= ow])
+    df['Ksat'][depth > ow] = gassmann(df['Ksoft'][depth > ow], rpm_k, k_water, df['phi'][depth > ow])
 
-    Msat = Ksat + (Gsat * 4./3.)
-    Vp = (Msat/10**9/rhob)**0.5
-    Vs = (Gsat/10**9/rhob)**0.5
-
+    df['Msat'] = df['Ksat'] + (df['Gsat'] * 4./3.)
+    df['Vp'] = (df['Msat']/10**9/df['rhob'])**0.5
+    df['Vs'] = (df['Gsat']/10**9/df['rhob'])**0.5
+    
     error_var = syn_variogram(depth, 1.0, 1.0)
-    Vp = simulations_error(error_var, Vp, 0.4)
-    Vs = simulations_error(error_var, Vs, 0.1)
-    rhob = simulations_error(error_var, rhob, 0.1)
 
+    df['Vp'] = simulations_error(error_var, df['Vp'], 0.4)
+    df['Vs'] = simulations_error(error_var, df['Vs'], 0.1)
+    df['rhob'] = simulations_error(error_var, df['rhob'], 0.1)
+
+    
+    X, Y = np.meshgrid(np.linspace(0, 1, 100), np.linspace(0, 1, 100))
     bivariate_plot(X, Y, rv_pdf, color)
-    logplots(depth, vclay, phi, sw, Vp, Vs, rhob, f1, f2, f3)
-    crossplot_vpvs(Vp, Vs, z=vclay, zlabel='VCLAY [dec]')
+    logplots(depth, df['vclay'], df['phi'], df['sw'], df['Vp'], df['Vs'], df['rhob'], df['facies'], df['code_facies'], color)
+    crossplot_vpvs(df['Vp'], df['Vs'], z=df['vclay'], zlabel='VCLAY [dec]')
 
-    DataFrame(data=np.array([depth, facies, code_facies, vclay, phi, sw, Vp, Vs, rhob]).T,
+    pd.DataFrame(data=np.array([depth, df['facies'], df['code_facies'], df['vclay'], df['phi'], df['sw'], df['Vp'], df['Vs'], df['rhob']]).T,
               columns=['DEPTH', 'CODE', 'FACIES', 'VCLAY', 'PHI', 'SW', 'VP', 'VS', 'RHOB']).to_csv('results/pseudowell.las',
                                                                                                      sep = ',', index=False)
+    
