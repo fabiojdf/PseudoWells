@@ -55,5 +55,6 @@ FINAL_PARAS = {
     'phi_c': 0.4,
     'coord_n': 4.0,
     'c_error': 0.5,
-    'r_error': 1.0
+    'r_error': 1.0,
+    'use_dif_params': True
 }

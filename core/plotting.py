@@ -85,13 +85,13 @@ def rpm_plot(x0, y0, x1, y1, c0, c1, lith0, lith1):
     plt.savefig('results/rpm.png', dpi=250, bbox_inches='tight')
 
 
-def logplots(depth, vclay, phie, sw, Vpsat, Vssat, rhor, shale, silty, sand):
+def logplots(depth, vclay, phie, sw, Vpsat, Vssat, rhor, facies, facies_code, colors):
 
     fig, (ax, ax1, ax2, ax3, ax4, ax5, ax6) = plt.subplots(1, 7, sharey=True, figsize=(14, 10))
 
-    ax.fill_betweenx(depth, 0, 5.0, where=shale, color='green', label='Shale',interpolate=True)
-    ax.fill_betweenx(depth, 0, 5.0, where=silty, color='brown', label='Silty-sand',interpolate=True)
-    ax.fill_betweenx(depth, 0, 5.0, where=sand, color='yellow', label='Sand',interpolate=True)
+    for i in range(len(colors)):
+        ax.fill_betweenx(depth, 0, 5.0, where=facies_code[:, i], color=colors[i], label=facies[i], interpolate=True) 
+
     ax.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
     ax.set_title('Lithologies', fontsize=12)
     ax.set_xlim(0, 1.0)
