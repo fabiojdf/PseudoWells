@@ -102,7 +102,7 @@ def syn_variogram(depth, C, a):
     return model
 
 
-def simulations(model, cov, avr_x, avr_y):
+def simulations(model, cov, avr_x, avr_y, seed):
     """Simulations workflow.
     
     Parameters
@@ -149,7 +149,9 @@ def simulations(model, cov, avr_x, avr_y):
 
     R = np.linalg.cholesky(K)
 
-    np.random.seed(42)
+    if seed==True:
+        np.random.seed(42)
+
     u = np.random.normal(loc=0, scale=1, size=2*len(model))
 
     w = np.dot(R, u)

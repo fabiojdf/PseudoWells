@@ -23,7 +23,8 @@ SIMUL_PARAS = {
     'p31': 0.05,
     'p32': 0.0,
     'code': ['Shale', 'Silty', 'Sand'],
-    'color': ['green', 'brown', 'yellow']
+    'color': ['green', 'brown', 'yellow'],
+    'fix_seed': True
 }
 
 FACIES_PARAS = {

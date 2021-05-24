@@ -21,6 +21,7 @@ P = np.matrix([[SIMUL_PARAS['p11'], SIMUL_PARAS['p12'], SIMUL_PARAS['p13']],
 
 code = SIMUL_PARAS['code']
 color = SIMUL_PARAS['color']
+seed = SIMUL_PARAS['seed']
 
 mux = FACIES_PARAS['mux']
 muy = FACIES_PARAS['muy']
@@ -59,7 +60,7 @@ def run():
 
     for i in range(nfacies):
         if (len(P) == nfacies) & (len(code) == nfacies):
-            df['facies'], df['code_facies'] = mcmc(nfacies, depth, P, code, sf=0)
+            df['facies'], df['code_facies'] = mcmc(nfacies, depth, P, code, seed, sf=0)
         else:
             raise ValueError('The number of facies is different from the codes of facies or matrix P dimensions. Check your parameters')
 
@@ -93,7 +94,7 @@ def run():
 
 
     for i in range(nfacies):
-        df[f'sim_x_f{i}'], df[f'sim_y_f{i}'], c_ex = simulations(df[f'model_f{i}'], covariance[i], df['m1'], df['m2']) 
+        df[f'sim_x_f{i}'], df[f'sim_y_f{i}'], c_ex = simulations(df[f'model_f{i}'], covariance[i], df['m1'], df['m2'], seed) 
 
 
     sim_x = np.empty(len(depth))
@@ -151,13 +152,14 @@ def run():
     df['Vs'] = simulations_error(error_var, df['Vs'], 0.1)
     df['rhob'] = simulations_error(error_var, df['rhob'], 0.1)
 
-    #print(np.shape(df.filter(regex='^fbool', axis=1).values))
+    # Ploting and saving pseudo-well
+
     X, Y = np.meshgrid(np.linspace(0, 1, 100), np.linspace(0, 1, 100))
     bivariate_plot(X, Y, rv_pdf, color)
     logplots(depth, df['vclay'], df['phi'], df['sw'], df['Vp'], df['Vs'], df['rhob'], code, df.filter(regex='^fbool', axis=1).values, color)
     crossplot_vpvs(df['Vp'], df['Vs'], z=df['vclay'], zlabel='VCLAY [dec]')
 
-    #pd.DataFrame(data=np.array([depth, df['facies'], df['code_facies'], df['vclay'], df['phi'], df['sw'], df['Vp'], df['Vs'], df['rhob']]).T,
-    #          columns=['DEPTH', 'CODE', 'FACIES', 'VCLAY', 'PHI', 'SW', 'VP', 'VS', 'RHOB']).to_csv('results/pseudowell.las',
-    #                                                                                                 sep = ',', index=False)
+    pd.DataFrame(data=np.array([depth, df['facies'], df['code_facies'], df['vclay'], df['phi'], df['sw'], df['Vp'], df['Vs'], df['rhob']]).T,
+                 columns=['DEPTH', 'CODE', 'FACIES', 'VCLAY', 'PHI', 'SW', 'VP', 'VS', 'RHOB']).to_csv('results/pseudowell.las',
+                                                                                                     sep = ',', index=False)
     
