@@ -90,7 +90,7 @@ def logplots(depth, vclay, phie, sw, Vpsat, Vssat, rhor, facies, facies_code, co
     fig, (ax, ax1, ax2, ax3, ax4, ax5, ax6) = plt.subplots(1, 7, sharey=True, figsize=(14, 10))
 
     for i in range(len(colors)):
-        ax.fill_betweenx(depth, 0, 5.0, where=facies_code[i], color=colors[i], label=facies[i],interpolate=True)
+        ax.fill_betweenx(depth, 0, 5.0, where=facies_code[:, i], color=colors[i], label=facies[i], interpolate=True) 
 
     ax.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
     ax.set_title('Lithologies', fontsize=12)

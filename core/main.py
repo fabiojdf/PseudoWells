@@ -67,7 +67,7 @@ def run():
     transition_matrix_show(P)
     
     for i in range(nfacies):
-        df[f'f{i}'] = (df['facies'] == i)
+        df[f'fbool{i}'] = (df['facies'] == i)
 
     rv = []
     rv_pdf = []
@@ -82,7 +82,7 @@ def run():
 
 
     for i in range(nfacies):
-        m1[df[f'f{i}']], m2[df[f'f{i}']], covariance[i] = sampling_from_gaussian(rv[i], depth, df[f'f{i}'])
+        m1[df[f'fbool{i}']], m2[df[f'fbool{i}']], covariance[i] = sampling_from_gaussian(rv[i], depth, df[f'fbool{i}'])
 
     df['m1'] = m1
     df['m2'] = m2
@@ -101,7 +101,7 @@ def run():
 
 
     for i in range(nfacies):
-        sim_x[df[f'f{i}']], sim_y[df[f'f{i}']] = df[f'sim_x_f{i}'][df[f'f{i}']], df[f'sim_y_f{i}'][df[f'f{i}']]
+        sim_x[df[f'fbool{i}']], sim_y[df[f'fbool{i}']] = df[f'sim_x_f{i}'][df[f'fbool{i}']], df[f'sim_y_f{i}'][df[f'fbool{i}']]
 
     df['phi'] = sim_x
     df['vclay'] = sim_y
@@ -112,7 +112,7 @@ def run():
     for words in code:
         if words.lower() == 'shale':
             index = i
-            df['sw'][df[f'f{index}']] = 1.0
+            df['sw'][df[f'fbool{index}']] = 1.0
             break
         else:
             i = i+1
@@ -120,11 +120,11 @@ def run():
     df['rhob'] = rhob_gen(depth, df['phi'], ow, rho_min, rho_oil, rho_water)
     
     df['Ksoft'], df['Gsoft'] = soft_sand(rpm_k, rpm_g, rho_min, df['phi'], phi_c, coord_n, rpm_p)
-    print(df)
+    print(df.head(50))
     
     if boolean == True:
-        df['Ksoft'][df[f'f{index}']], df['Gsoft'][df[f'f{index}']] = soft_sand(K=21.0 * 10**9, G=7.0 * 10**9, rho=2.58,
-                                                                               phi=df['phi'][df[f'f{index}']], phic=phi_c,
+        df['Ksoft'][df[f'fbool{index}']], df['Gsoft'][df[f'fbool{index}']] = soft_sand(K=21.0 * 10**9, G=7.0 * 10**9, rho=2.58,
+                                                                               phi=df['phi'][df[f'fbool{index}']], phic=phi_c,
                                                                                n=11.0, P=rpm_p)    
     
     rpm_plot(np.linspace(0, 1, 100),
@@ -151,13 +151,13 @@ def run():
     df['Vs'] = simulations_error(error_var, df['Vs'], 0.1)
     df['rhob'] = simulations_error(error_var, df['rhob'], 0.1)
 
-    
+    #print(np.shape(df.filter(regex='^fbool', axis=1).values))
     X, Y = np.meshgrid(np.linspace(0, 1, 100), np.linspace(0, 1, 100))
     bivariate_plot(X, Y, rv_pdf, color)
-    logplots(depth, df['vclay'], df['phi'], df['sw'], df['Vp'], df['Vs'], df['rhob'], df['facies'], df['code_facies'], color)
+    logplots(depth, df['vclay'], df['phi'], df['sw'], df['Vp'], df['Vs'], df['rhob'], code, df.filter(regex='^fbool', axis=1).values, color)
     crossplot_vpvs(df['Vp'], df['Vs'], z=df['vclay'], zlabel='VCLAY [dec]')
 
-    pd.DataFrame(data=np.array([depth, df['facies'], df['code_facies'], df['vclay'], df['phi'], df['sw'], df['Vp'], df['Vs'], df['rhob']]).T,
-              columns=['DEPTH', 'CODE', 'FACIES', 'VCLAY', 'PHI', 'SW', 'VP', 'VS', 'RHOB']).to_csv('results/pseudowell.las',
-                                                                                                     sep = ',', index=False)
+    #pd.DataFrame(data=np.array([depth, df['facies'], df['code_facies'], df['vclay'], df['phi'], df['sw'], df['Vp'], df['Vs'], df['rhob']]).T,
+    #          columns=['DEPTH', 'CODE', 'FACIES', 'VCLAY', 'PHI', 'SW', 'VP', 'VS', 'RHOB']).to_csv('results/pseudowell.las',
+    #                                                                                                 sep = ',', index=False)
     

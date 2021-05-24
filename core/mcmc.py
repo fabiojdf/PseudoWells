@@ -45,13 +45,18 @@ def mcmc(nfacies, depth, P, code, sf=1):
 
     for i in range(1, len(depth)):
 
-        row = facies[i-1] - 1
-        P_1 = P[0, int(row)]
-        P_2 = P[1, int(row)]
-        P_3 = P[2, int(row)]
-        dist = [P_1, P_2, P_3]
+        row = facies[i-1]
+        dist=[]
+        for j in range(nfacies):
+            dist.append(P[j, int(row)])
         facies[i] = random.choices(a, dist)[0]
         code_facies.append(dic.get(facies[i]))
+        #P_1 = P[0, int(row)]
+        #P_2 = P[1, int(row)]
+        #P_3 = P[2, int(row)]
+        #dist = [P_1, P_2, P_3]
+        #facies[i] = random.choices(a, dist)[0]
+        #code_facies.append(dic.get(facies[i]))
 
     return facies[::-1], code_facies[::-1]
     
