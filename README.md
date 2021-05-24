@@ -1,6 +1,6 @@
 # Pseudo-Wells
 
-Generating pseudo-wells using MCMC and stochastic simulations.
+Generating pseudo-wells using MCMC and stochastic simulations. This repository was created with the objective of assist the students from UFF-Brazil in MSPR course.
 
 **Setup**
 * random
@@ -8,6 +8,8 @@ Generating pseudo-wells using MCMC and stochastic simulations.
 * pandas
 * scipy
 * matplotlib
+
+The packages used in this repository can be installed using in your Anaconda Prompt the following command:
 
 ```
 pip install -r requirements.txt

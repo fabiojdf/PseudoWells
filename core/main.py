@@ -121,7 +121,6 @@ def run():
     df['rhob'] = rhob_gen(depth, df['phi'], ow, rho_min, rho_oil, rho_water)
     
     df['Ksoft'], df['Gsoft'] = soft_sand(rpm_k, rpm_g, rho_min, df['phi'], phi_c, coord_n, rpm_p)
-    print(df.head(50))
     
     if boolean == True:
         df['Ksoft'][df[f'fbool{index}']], df['Gsoft'][df[f'fbool{index}']] = soft_sand(K=21.0 * 10**9, G=7.0 * 10**9, rho=2.58,
