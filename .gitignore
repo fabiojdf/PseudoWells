@@ -1,1 +1,3 @@
 *.lasso linguist-detectable=false
+*.png
+*.lasso
